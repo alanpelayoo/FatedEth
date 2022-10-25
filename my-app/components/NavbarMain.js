@@ -8,7 +8,7 @@ import {
   faDiscord
 } from "@fortawesome/free-brands-svg-icons";
 
-
+import Link from 'next/link'
 
 
 
@@ -18,13 +18,18 @@ function NavbarMain() {
         <div className="mx-0 mx-md-5 d-flex justify-content-between align-items-center  w-100 ">
           <h1 className={styles.title}>FatedEth</h1>
           <div className={styles.menu}>
-            <a href="/" className={styles.semi}><p className="me-4 fs-5">Home</p></a>
-            <a href="/" className={styles.semi}><p className="me-4 fs-5">Mint</p></a>
-            <a href="/whitelist" className={styles.semi}><p className="me-4 fs-5">Whitelist</p></a>
-            <a href="/about" className={styles.semi}><p className="me-4 fs-5">About Us</p></a>
-            
-            
-            
+            <Link href="/"> 
+              <a  className={styles.semi}><p className="me-4 fs-5">Home</p></a>
+            </Link>
+            <Link href="/">
+              <a  className={styles.semi}><p className="me-4 fs-5">Mint</p></a>
+            </Link>
+            <Link href="/whitelist">
+              <a  className={styles.semi}><p className="me-4 fs-5">Whitelist</p></a>
+            </Link>
+            <Link href="/about">
+              <a  className={styles.semi}><p className="me-4 fs-5">About Us</p></a>
+            </Link>    
           </div>
           <div className='d-flex'>
             <Button className={styles.menub} variant="secondary rounded-pill px-4 py-2 d-md-flex align-items-center">Discord <FontAwesomeIcon icon={faDiscord} className="d-flex   ms-2"/> </Button>
