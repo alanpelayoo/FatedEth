@@ -11,7 +11,7 @@ import { abi2, NFT_CONTRACT_ADDRESS } from "../constants";
 import Web3Modal from "web3modal";
 
 import { Row, Col } from 'react-bootstrap'
-function mint() {
+function Mint() {
   const [presaleStarted, setPresaleStarted] = useState(true);
   const [presaleEnded, setPresaleEnded] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
@@ -287,4 +287,4 @@ function mint() {
   )
 }
 
-export default mint
+export default Mint

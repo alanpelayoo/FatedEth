@@ -8,7 +8,7 @@ import Container from 'react-bootstrap/Container';
 
 
 import { Row, Col } from 'react-bootstrap'
-function about() {
+function About() {
   
   return (
     <div>
@@ -26,8 +26,8 @@ function about() {
                 I did this NFT minting and whitelist project to practice my skills in web3, so if you want 
                 to take a look at the code, the repo is down here 👇.</h3>
                 <div className='d-flex'>
-                    <h5 className='me-3'><a href='https://github.com/alanpelayoo/FatedEth' target="_blank">Github</a></h5>
-                    <h5><a href='https://www.linkedin.com/in/alan-pelayo-zepeda-a91494253/' target="_blank">Linkedin</a></h5>
+                    <h5 className='me-3'><a href='https://github.com/alanpelayoo/FatedEth' target="_blank" rel="noreferrer">Github</a></h5>
+                    <h5><a href='https://www.linkedin.com/in/alan-pelayo-zepeda-a91494253/' target="_blank" rel="noreferrer">Linkedin</a></h5>
                 </div>
                   
             </Col>
@@ -37,4 +37,4 @@ function about() {
   )
 }
 
-export default about
+export default About

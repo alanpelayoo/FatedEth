@@ -28,7 +28,7 @@ function NavbarMain() {
           </div>
           <div className='d-flex'>
             <Button className={styles.menub} variant="secondary rounded-pill px-4 py-2 d-md-flex align-items-center">Discord <FontAwesomeIcon icon={faDiscord} className="d-flex   ms-2"/> </Button>
-            <Button href="https://testnets.opensea.io/collection/crypto-devs-gzxsl2llff"  target="_blank" className={styles.menub} variant="primary rounded-pill px-4 py-2 d-md-flex align-items-center">Opensea  </Button>
+            <Button href="https://testnets.opensea.io/collection/crypto-devs-gzxsl2llff"  target="_blank" rel="noreferrer" className={styles.menub} variant="primary rounded-pill px-4 py-2 d-md-flex align-items-center">Opensea  </Button>
           </div>
           
           
