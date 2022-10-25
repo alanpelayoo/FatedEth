@@ -1,56 +1,156 @@
-
-import Head from "next/head";
+import React from 'react'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import styles from "../styles/Home.module.css";
-
-import NavbarMain from '../components/NavbarMain'
-
-
+import NavbarMain from '../components/NavbarMain';
 import Container from 'react-bootstrap/Container';
 
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBars,
-  faXmark
-} from "@fortawesome/free-solid-svg-icons";
-
-
-
-
+import { useEffect, useRef, useState } from 'react';
+import { Contract, providers, utils } from "ethers";
+import { abi2, NFT_CONTRACT_ADDRESS } from "../constants";
 import Web3Modal from "web3modal";
-import { providers, Contract } from "ethers";
-import { useEffect, useRef, useState } from "react";
-import { WHITELIST_CONTRACT_ADDRESS, abi } from "../constants";
 
-
-export default function Home() {
-  // walletConnected keep track of whether the user's wallet is connected or not
+import { Row, Col } from 'react-bootstrap'
+function mint() {
+  const [presaleStarted, setPresaleStarted] = useState(true);
+  const [presaleEnded, setPresaleEnded] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
-  // joinedWhitelist keeps track of whether the current metamask address has joined the Whitelist or not
-  const [joinedWhitelist, setJoinedWhitelist] = useState(false);
-  // loading is set to true when we are waiting for a transaction to get mined
   const [loading, setLoading] = useState(false);
-  // numberOfWhitelisted tracks the number of addresses's whitelisted
-  const [numberOfWhitelisted, setNumberOfWhitelisted] = useState(0);
-  // Create a reference to the Web3 Modal (used for connecting to Metamask) which persists as long as the page is open
+  const [isOwner, setIsOwner] = useState(false);
+  const [numTokensMinted, setNumTokensMinted] = useState("");
   const web3ModalRef = useRef();
-  const [buttonState,setButton] = useState(false)
 
-  /**
-   * Returns a Provider or Signer object representing the Ethereum RPC with or without the
-   * signing capabilities of metamask attached
-   *
-   * A `Provider` is needed to interact with the blockchain - reading transactions, reading balances, reading state, etc.
-   *
-   * A `Signer` is a special type of Provider used in case a `write` transaction needs to be made to the blockchain, which involves the connected account
-   * needing to make a digital signature to authorize the transaction being sent. Metamask exposes a Signer API to allow your website to
-   * request signatures from the user using Signer functions.
-   *
-   * @param {*} needSigner - True if you need the signer, default false otherwise
-   */
+  const getNumMintedTokens = async () => {
+    try {
+      const provider = await getProviderOrSigner();
+      const nftContract = new Contract(NFT_CONTRACT_ADDRESS, abi2, provider);
+      const numTokenIds = await nftContract.tokenIds();
+      setNumTokensMinted(numTokenIds.toString());
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const presaleMint = async () => {
+    setLoading(true);
+      try {
+        const signer = await getProviderOrSigner(true);
+        const nftContract = new Contract(NFT_CONTRACT_ADDRESS, abi2, signer);
+        
+        const txn = await nftContract.presaleMint({
+          value: utils.parseEther("0.01"),
+        });
+        await txn.wait();
+        window.alert("You succesfully minted a Cryptodev!");
+      } catch (error) {
+        console.error(error);
+      }
+      setLoading(false);
+  };
+
+  const publicMint = async () =>{
+    setLoading(true);
+    try {
+      const signer = await getProviderOrSigner(true);
+      const nftContract = new Contract(NFT_CONTRACT_ADDRESS, abi2, signer);
+      
+      const txn = await nftContract.mint({
+        value: utils.parseEther("0.01"),
+      });
+      
+      await txn.wait();
+      window.alert("You succesfully minted a Cryptodev!");
+    } catch (error) {
+      console.error(error);
+    }
+    setLoading(false);
+  };
+
+  const getOwner = async () => {
+    try {
+      const provider = await getProviderOrSigner();
+      const nftContract = new Contract(NFT_CONTRACT_ADDRESS, abi2, provider);
+      // call the owner function from the contract
+      const _owner = await nftContract.owner();
+      // We will get the signer now to extract the address of the currently connected MetaMask account
+      const signer = await getProviderOrSigner(true);
+      // Get the address associated to the signer which is connected to  MetaMask
+      const address = await signer.getAddress();
+      if (address.toLowerCase() === _owner.toLowerCase()) {
+        setIsOwner(true);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const startPresale = async () => {
+    try {
+      // We need a Signer here since this is a 'write' transaction.
+      const signer = await getProviderOrSigner(true);
+      // Create a new instance of the Contract with a Signer, which allows
+      // update methods
+      const whitelistContract = new Contract(
+        NFT_CONTRACT_ADDRESS,
+        abi2,
+        signer
+      );
+      // call the startPresale from the contract
+      const tx = await whitelistContract.startPresale();
+      setLoading(true);
+      // wait for the transaction to get mined
+      await tx.wait();
+      setLoading(false);
+      // set the presale started to true
+      await checkIfPresaleStarted();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const checkIfPresaleEnded = async () =>{
+    try {
+      const provider = await getProviderOrSigner();
+      const nftContract = new Contract(NFT_CONTRACT_ADDRESS, abi2, provider);
+
+      const presaleEndTime = await nftContract.presaleEnded();
+      const currentTimeInSeconds = Date.now() / 1000;
+
+      const hasPresaleEnded = presaleEndTime.lt(
+        Math.floor(currentTimeInSeconds)
+        );
+      setPresaleEnded(hasPresaleEnded);
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const checkIfPresaleStarted = async () => {
+    try {
+      const provider = await getProviderOrSigner();
+      const nftContract = new Contract(NFT_CONTRACT_ADDRESS, abi2, provider);
+
+      const _presaleStarted = await nftContract.presaleStarted();
+      setPresaleStarted(_presaleStarted);
+      return _presaleStarted;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  };
+
+  const connectWallet = async() => {
+    try {
+      await getProviderOrSigner();
+      setWalletConnected(true);
+    } catch (error) {
+      console.error(error);
+    }
+    
+  };
+
   const getProviderOrSigner = async (needSigner = false) => {
     // Connect to Metamask
     // Since we store `web3Modal` as a reference, we need to access the `current` value to get access to the underlying object
@@ -71,179 +171,120 @@ export default function Home() {
     return web3Provider;
   };
 
-  /**
-   * addAddressToWhitelist: Adds the current connected address to the whitelist
-   */
-  const addAddressToWhitelist = async () => {
-    try {
-      // We need a Signer here since this is a 'write' transaction.
-      const signer = await getProviderOrSigner(true);
-      // Create a new instance of the Contract with a Signer, which allows
-      // update methods
-      const whitelistContract = new Contract(
-        WHITELIST_CONTRACT_ADDRESS,
-        abi,
-        signer
-      );
-      // call the addAddressToWhitelist from the contract
-      const tx = await whitelistContract.addAddressToWhitelist();
-      setLoading(true);
-      // wait for the transaction to get mined
-      await tx.wait();
-      setLoading(false);
-      // get the updated number of addresses in the whitelist
-      await getNumberOfWhitelisted();
-      setJoinedWhitelist(true);
-    } catch (err) {
-      console.error(err);
+  //updates with refresh
+  const onPageLoad = async () => {
+    await connectWallet();
+    await getOwner();
+    const presaleStarted = await checkIfPresaleStarted();
+    if(presaleStarted){
+      await checkIfPresaleEnded();
     }
-  };
+    await getNumMintedTokens();
+    // tracks in real time
+    setInterval(async() => {
+      await getNumMintedTokens();
+    }, 5*1000);
 
-  /**
-   * getNumberOfWhitelisted:  gets the number of whitelisted addresses
-   */
-  const getNumberOfWhitelisted = async () => {
-    try {
-      // Get the provider from web3Modal, which in our case is MetaMask
-      // No need for the Signer here, as we are only reading state from the blockchain
-      const provider = await getProviderOrSigner();
-      // We connect to the Contract using a Provider, so we will only
-      // have read-only access to the Contract
-      const whitelistContract = new Contract(
-        WHITELIST_CONTRACT_ADDRESS,
-        abi,
-        provider
-      );
-      // call the numAddressesWhitelisted from the contract
-      const _numberOfWhitelisted = await whitelistContract.numAddressesWhitelisted();
-      setNumberOfWhitelisted(_numberOfWhitelisted);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  /**
-   * checkIfAddressInWhitelist: Checks if the address is in whitelist
-   */
-  const checkIfAddressInWhitelist = async () => {
-    try {
-      // We will need the signer later to get the user's address
-      // Even though it is a read transaction, since Signers are just special kinds of Providers,
-      // We can use it in it's place
-      const signer = await getProviderOrSigner(true);
-      const whitelistContract = new Contract(
-        WHITELIST_CONTRACT_ADDRESS,
-        abi,
-        signer
-      );
-      // Get the address associated to the signer which is connected to  MetaMask
-      const address = await signer.getAddress();
-      // call the whitelistedAddresses from the contract
-      const _joinedWhitelist = await whitelistContract.whitelistedAddresses(
-        address
-      );
-      setJoinedWhitelist(_joinedWhitelist);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  /*
-    connectWallet: Connects the MetaMask wallet
-  */
-  const connectWallet = async () => {
-    try {
-      // Get the provider from web3Modal, which in our case is MetaMask
-      // When used for the first time, it prompts the user to connect their wallet
-      await getProviderOrSigner();
-      setWalletConnected(true);
-
-      checkIfAddressInWhitelist();
-      getNumberOfWhitelisted();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  /*
-    renderButton: Returns a button based on the state of the dapp
-  */
-  const renderButton = () => {
-    
-    if (walletConnected) {
-      if (joinedWhitelist) {
-        return (
-          <div className={styles.description}>
-            Thanks for joining the Whitelist!
-          </div>
-        );
-      } else if (loading) {
-        return <button className={styles.button}>Loading...</button>;
-      } else {
-        return (
-          <button onClick={addAddressToWhitelist} className={styles.button}>
-            Join the Whitelist
-          </button>
-        );
+    setInterval(async() => {
+      const presaleStarted = await checkIfPresaleStarted();
+      if (presaleStarted) {
+        await checkIfPresaleEnded();
       }
-    } else {
+    },5*1000);
+  };
+
+  useEffect(() => {
+    if(!walletConnected){
+      web3ModalRef.current = new Web3Modal({
+        network: "goerli",
+        providerOptions: {},
+        disableInjectedProvider: false,
+      });
+      onPageLoad();
+    }
+  }, [walletConnected])
+
+  const renderButton = () => {
+    // If wallet is not connected, return a button which allows them to connect their wllet
+    if (!walletConnected) {
       return (
         <button onClick={connectWallet} className={styles.button}>
           Connect your wallet
         </button>
       );
     }
+
+    // If we are currently waiting for something, return a loading button
+    if (loading) {
+      return <button className={styles.button}>Loading...</button>;
+    }
+    // If connected user is the owner, and presale hasnt started yet, allow them to start the presale
+    if (isOwner && !presaleStarted) {
+      return (
+        <button className={styles.button} onClick={startPresale}>
+          Start Presale!
+        </button>
+      );
+    }
+
+    // If connected user is not the owner but presale hasn't started yet, tell them that
+    if (!presaleStarted) {
+      return (
+        <div>
+          <div className={styles.description}>Presale hasnt started!</div>
+        </div>
+      );
+    }
+
+    // If presale started, but hasn't ended yet, allow for minting during the presale period
+    if (presaleStarted && !presaleEnded) {
+      return (
+        <div>
+          <div className={styles.description}>
+            Presale has started!!! If your address is whitelisted, Mint a
+            Crypto Dev 🥳
+          </div>
+          <button onClick={presaleMint} className={styles.button}>Presale Mint</button>
+        </div>
+      );
+    }
+
+    // If presale started and has ended, its time for public minting
+    if (presaleStarted && presaleEnded) {
+      return (
+        <button className={styles.button} onClick={publicMint}>
+          Public Mint 🚀
+        </button>
+      );
+    }
+    else{
+      return(
+        null
+      );
+    };
   };
 
-
-
-  // useEffects are used to react to changes in state of the website
-  // The array at the end of function call represents what state changes will trigger this effect
-  // In this case, whenever the value of `walletConnected` changes - this effect will be called
-  useEffect(() => {
-    // if wallet is not connected, create a new instance of Web3Modal and connect the MetaMask wallet
-    if (!walletConnected) {
-      // Assign the Web3Modal class to the reference object by setting it's `current` value
-      // The `current` value is persisted throughout as long as this page is open
-      web3ModalRef.current = new Web3Modal({
-        network: "goerli",
-        providerOptions: {},
-        disableInjectedProvider: false,
-      });
-      connectWallet();
-    }
-  }, [walletConnected]);
-  return(
-
+  return (
     <div>
-      <NavbarMain/>
+        <NavbarMain/>
 
-      <Container  style={{minHeight: "80vh"}} className="mb-3">
-        <Row className="h-100" xs={1} md={2} lg={2}>
-          <Col className=" d-flex flex-column justify-content-center align-items-center p-0">
-            <img className={styles.image} src="./cryptodevs/4.svg" />
-          </Col>
-          <Col className=" d-flex flex-column justify-content-center align-items-center text-center align-items-md-start text-md-start  ps-md-5">
-            <h1 className="mb-2">Welcome to FatedEth!</h1>
-            <h3 className="fw-light mb-1">The NFT collection for developers and fated followers of Eth.</h3>
-            <h3 className="fw-lighter mb-2">{numberOfWhitelisted} have already joined the Whitelist 🚀</h3>
-            <div className="">
-            {renderButton()}
-            </div>          
-          </Col>
-        </Row>
-      </Container>
-
-      <footer className={styles.footer}>
-        <Container className="text-center">
-          <strong>Important Note:</strong>
-          <br></br>
-          This is only a local test for our future NFT Drop, We are testing the White list fullstack feature in the Rinkeby Network, so this White List will only work on the testing purpose. 
-        <br></br>
-          Made with &#10084; by apcodes.eth
+        <Container  style={{minHeight: "80vh"}} className="mb-3">
+          <Row className="h-100" xs={1} md={2} lg={2}>
+            <Col className=" d-flex flex-column justify-content-center align-items-center p-0">
+              <img className={styles.image} src="./cryptodevs/4.svg" />
+            </Col>
+            <Col className=" d-flex flex-column justify-content-center align-items-center text-center align-items-md-start text-md-start  ps-md-5">
+              <h1 className="mb-2">Welcome to FatedEth mint!</h1>
+              <h3 className="fw-light mb-1">The NFT collection for developers and fated followers of Eth.</h3>
+              <h3 className="fw-lighter mb-2"> {numTokensMinted}/20 nft´s have been minted already!</h3>
+              <div className="">
+              {renderButton()}
+              </div>          
+            </Col>
+          </Row>
         </Container>
-      </footer>
-      
     </div>
   )
 }
+
+export default mint

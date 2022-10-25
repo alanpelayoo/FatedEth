@@ -8,6 +8,10 @@ import {
   faDiscord
 } from "@fortawesome/free-brands-svg-icons";
 
+
+
+
+
 function NavbarMain() {
   return (
     <Navbar bg="white" className="px-5 py-2 mb-2">
@@ -15,12 +19,19 @@ function NavbarMain() {
           <h1 className={styles.title}>FatedEth</h1>
           <div className={styles.menu}>
             <a href="/" className={styles.semi}><p className="me-4 fs-5">Home</p></a>
-            <a href="" className={styles.semi}><p className="me-4 fs-5">About Us</p></a>
-            <a href="" className={styles.semi}><p className="me-4 fs-5">Whitelist</p></a>
-            <a href="/mint" className={styles.semi}><p className="me-4 fs-5">Mint</p></a>
-            <a href="" className={styles.semi}><p className="me-4 fs-5">Faq</p></a>
+            <a href="/" className={styles.semi}><p className="me-4 fs-5">Mint</p></a>
+            <a href="/whitelist" className={styles.semi}><p className="me-4 fs-5">Whitelist</p></a>
+            <a href="/about" className={styles.semi}><p className="me-4 fs-5">About Us</p></a>
+            
+            
+            
           </div>
-          <Button className={styles.menub} variant="dark rounded-pill px-4 py-2 d-md-flex align-items-center">Discord <FontAwesomeIcon icon={faDiscord} className="d-flex   ms-2"/> </Button>
+          <div className='d-flex'>
+            <Button className={styles.menub} variant="secondary rounded-pill px-4 py-2 d-md-flex align-items-center">Discord <FontAwesomeIcon icon={faDiscord} className="d-flex   ms-2"/> </Button>
+            <Button href="https://testnets.opensea.io/collection/crypto-devs-gzxsl2llff"  target="_blank" className={styles.menub} variant="primary rounded-pill px-4 py-2 d-md-flex align-items-center">Opensea  </Button>
+          </div>
+          
+          
           
         </div>
     </Navbar>

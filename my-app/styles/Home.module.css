@@ -55,6 +55,9 @@
   background-color: white;
 }
 
+.menub {
+  margin:7px;
+}
 
 @media (max-width: 900px) {
   .menu {
